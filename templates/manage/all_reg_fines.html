@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+{% block content %}
+<link href="https://cdn.jsdelivr.net/npm/simple-datatables@latest/dist/style.css" rel="stylesheet" type="text/css">
+<script src="https://cdn.jsdelivr.net/npm/simple-datatables@latest" type="text/javascript"></script>
+<div class="pagetitle">
+    <h1>All Fine  </h1>
+    <nav>
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="#">Home</a></li>
+            <li class="breadcrumb-item active">Dashboard</li>
+        </ol>
+    </nav>
+</div><!-- End Page Title -->
+<div class="modal fade" id="carUpdateModel" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Update Fine Info</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <form id="carUdateForm">
+                <div id='carUdateModalBody' class="modal-body">
+
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save changes</button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div><!-- End Large Modal-->
+<section class="section">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">ALl Fines-Info</h5>
+
+                    <!-- Table with stripped rows -->
+                    <table id='carsDatatable' class="table datatable">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Fine-Title</th>
+                                <th scope="col">Info</th>
+                                <th scope="col">Price</th>
+                                <th scope="col">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<script>
+    const carsDatatable = new simpleDatatables.DataTable("#carsDatatable", {
+        searchable: true,
+        fixedHeight: true,
+
+    })
+
+    $(document).ready(async function () {
+        getCars()
+
+    })
+    function getCars() {
+        fetch('/api/fine-list/').then((resp) => resp.json()).then(function (carsResp) {
+
+            $.each(carsResp, async function (i, theCar) {
+                carsDatatable.rows().add([
+                    theCar.id.toString(),
+                    theCar.fineTitle,
+                    theCar.info,
+                   '$'+theCar.price.toString(),
+                    `
+                 &nbsp<i onclick='updateCar(${theCar.id})' class="bi bi-pen" style='color:green'></i>
+                 &nbsp <i onclick='delFineReg(${theCar.id})' class="bi bi-trash" style='color:red'></i>`
+                ])
+
+
+            })
+        })
+    }
+    async function updateCar(id) {
+        var carUdateModalBody = document.getElementById('carUdateModalBody')
+
+        await fetch('/api/fine-detail/' + id + '/').then((resp) => resp.json()).then(async function (carResp) {
+            
+            carUdateModalBody.innerHTML = `
+            <div class="row mb-3">
+                            <label for="inputText" class="col-sm-2 col-form-label">Fine-Tole</label>
+                            <div class="col-sm-10">
+                                <input type="text" name="fineTitle" value='${carResp.fineTitle}' required class="form-control">
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <label for="inputNumber" class="col-sm-2 col-form-label">Price</label>
+                            <div class="col-sm-10">
+                                <input type="text" name='price' value='${carResp.price}' class="form-control">
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <label for="inputPassword" class="col-sm-2 col-form-label">Desc</label>
+                            <div class="col-sm-10">
+                                <textarea class="form-control" name="info" style="height: 100px">${carResp.info}</textarea>
+                            </div>
+                        </div>
+
+
+            `
+         
+        })
+        $('#carUpdateModel').modal('show');
+        document.getElementById('carUdateForm').addEventListener('submit', async function (e) {
+            e.preventDefault()
+
+            var formData = new FormData(this)
+    
+            await $.ajax({
+                type: "POST",
+                data: formData,
+                headers: { 'X-CSRFToken': getCookie('csrftoken') },
+                url: '/api/fine-update/' + id + '/',
+                cache: false,
+                contentType: false,
+                processData: false,
+                success: function (carUpdateResp) {
+
+                    if (carUpdateResp.status == 'success') {
+                        swal("Fine Was Succesfully Update ", {
+                            icon: "success"
+                        });
+                        // document.getElementById('userUdateForm').reset()
+                        $('#carUpdateModel').modal('hide');
+                        location.reload()
+                    }
+
+
+
+
+
+                },
+                error: function (carRespErr) {
+
+                }
+            })
+
+
+        })
+
+
+    }
+</script>
+
+{% endblock %}

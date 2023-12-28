@@ -1,0 +1,275 @@
+{% extends 'base.html' %}
+{% block content %}
+<link href="https://cdn.jsdelivr.net/npm/simple-datatables@latest/dist/style.css" rel="stylesheet" type="text/css">
+<script src="https://cdn.jsdelivr.net/npm/simple-datatables@latest" type="text/javascript"></script>
+<div class="pagetitle">
+    <h1>All Fines </h1>
+    <nav>
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="#">Home</a></li>
+            <li class="breadcrumb-item active">Dashboard</li>
+        </ol>
+    </nav>
+</div><!-- End Page Title -->
+<section class="section dashboard">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">ALl Cars-Info</h5>
+
+                    <!-- Table with stripped rows -->
+                    <table id='carsDatatable' class="table datatable">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th scope="col">#</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <!-- Customers Card -->
+        <!-- End Customers Card -->
+    </div>
+</section>
+<br>
+<section class="section dashboard">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Fixed Problems</h5>
+
+                    <!-- Table with stripped rows -->
+                    <table id='carsFixedDatatable' class="table datatable">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th scope="col">#</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <!-- Customers Card -->
+        <!-- End Customers Card -->
+    </div>
+</section>
+<script>
+    const carsDatatable = new simpleDatatables.DataTable("#carsDatatable", {
+        searchable: true,
+        fixedHeight: true,
+
+    })
+    const carsFixedDatatable = new simpleDatatables.DataTable("#carsFixedDatatable", {
+        searchable: true,
+        fixedHeight: true,
+
+    })
+    
+
+
+    $(document).ready(async function () {
+        getCars()
+
+    })
+    function getCars() {
+        var buttonData = ``
+        fetch('/api/carFines-list/').then((resp) => resp.json()).then(function (carsResp) {
+
+            $.each(carsResp, async function (i, theCar) {
+                console.log(theCar.balance)
+                
+                if(theCar.fixed==true){
+                    carsFixedDatatable.rows().add([
+                    `
+                    <div style='width:100%;' class="col-xxl-4 col-xl-12">
+
+                        <div style='background-color:#212f3c;color:white;' class="card info-card customers-card">
+
+                        <div class="filter">
+                            <a class="icon" href="#" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></a>
+                            <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
+                            <li class="dropdown-header text-start">
+                                <h6>Filter</h6>
+                            </li>
+                            <li><a class="dropdown-item" onclick='repaidTheFine(${theCar.id})' >Repaid Fine</a></li>
+                            <li><a class="dropdown-item" onclick='delFine(${theCar.id})'>Delete</a></li>
+                          
+                            </ul>
+                        </div>
+
+                        <div class="card-body">
+                            <h5 style='color:white;' class="card-title">${theCar.carName} - ${theCar.carTargo}  <span>| ${theCar.dateTimeReg.split('T')[0]}- ${theCar.dateTimeReg.split('T')[1].split('Z')[0]}</span></h5>
+
+                            <div class="d-flex align-items-center">
+                            <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                                <i class="bi bi-people"></i>
+                            </div>
+                            <div class="ps-3">
+                                <h6 style='background-color:#212f3c;color:white;'>${theCar.fineTitle}</h6>
+                                <span class="text-danger small pt-1 fw-bold">$${theCar.penallyMoney}</span> balance <span class="text-danger small pt-1 fw-bold">$${theCar.balance}</span> <span class="text-muted small pt-2 ps-1">${theCar.desc}</span>
+
+                            </div>
+                            </div>
+
+                        </div>
+                        </div>
+
+                        </div>
+                    `,
+
+                ])
+                }else{
+                    carsDatatable.rows().add([
+                    `
+                    <div style='width:100%;' class="col-xxl-4 col-xl-12">
+
+                        <div class="card info-card customers-card">
+
+                        <div class="filter">
+                            <a class="icon" href="#" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></a>
+                            <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
+                            <li class="dropdown-header text-start">
+                                <h6>Filter</h6>
+                            </li>
+                            <li><a class="dropdown-item" onclick='fixedFine(${theCar.id})' >Fixed Fine</a></li>
+                            <li><a class="dropdown-item" onclick='paidedMoney(${theCar.id})'>Paid M</a></li>
+                            <li><a class="dropdown-item" onclick='delFine(${theCar.id})'>Delete</a></li>
+                            </ul>
+                        </div>
+
+                        <div class="card-body">
+                            <h5 class="card-title">${theCar.carName} - ${theCar.carTargo}  <span>| ${theCar.dateTimeReg.split('T')[0]}- ${theCar.dateTimeReg.split('T')[1].split('Z')[0]}</span></h5>
+
+                            <div class="d-flex align-items-center">
+                            <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                                <i class="bi bi-people"></i>
+                            </div>
+                            <div class="ps-3">
+                                <h6>${theCar.fineTitle}</h6>
+                                price &nbsp<span class="text-danger small pt-1 fw-bold">$${theCar.penallyMoney}</span > balance <span class="text-danger small pt-1 fw-bold">$${theCar.balance}</span><span class="text-muted small pt-2 ps-1">${theCar.desc}</span>
+
+                            </div>
+                            </div>
+
+                        </div>
+                        </div>
+
+                        </div>
+                    `,
+
+                ])
+                }
+
+
+
+            })
+        })
+    }
+    function fixedFine(id) {
+        swal({
+            title: "Are You Sure To?",
+            text: "Fixed The Problem Of This Car ",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+        }).then(async (willDelete) => {
+            if (willDelete) {
+                $.ajax({
+                    method: 'POST',
+                    url: '/api/carFines-update/' + id + '/',
+                    data: JSON.stringify({
+                        'fixed': true,
+                        'paided': true,
+                    }),
+                    headers: { 'X-CSRFToken': getCookie('csrftoken'), 'Content-type': "application/json" },
+                    success: function (stdDelResp) {
+                        swal("You Succesfully Deleted This Car", {
+                            icon: "success",
+                        });
+                        location.reload()
+                    }
+                });
+
+            }
+        });
+    }
+    function repaidTheFine(id) {
+        fetch('/api/carFines-detail/'+id+'/').then((resp) => resp.json()).then(function (carsResp) {
+            swal({
+            title: "Are You Sure To?",
+            text: "Re Charge Problem Of This Car ",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+        }).then(async (willDelete) => {
+            if (willDelete) {
+                $.ajax({
+                    method: 'POST',
+                    url: '/api/carFines-update/' + id + '/',
+                    data: JSON.stringify({
+                        'fixed': false,
+                        'paided': false,
+                        'balance':carsResp.penallyMoney,
+                    }),
+                    headers: { 'X-CSRFToken': getCookie('csrftoken'), 'Content-type': "application/json" },
+                    success: function (stdDelResp) {
+                        swal("You Succesfully Re Charged This Car", {
+                            icon: "success",
+                        });
+                        location.reload()
+                    }
+                });
+
+            }
+        });
+        })
+        
+    }
+    function paidedMoney(id) {
+        swal({
+            title: "Are You Sure?",
+            text: "Paiding Money And Fixing The Problem  ",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+        }).then(async (willDelete) => {
+            if (willDelete) {
+                $.ajax({
+                    method: 'POST',
+                    url: '/api/carFines-update/' + id + '/',
+                    data: JSON.stringify({
+                        'fixed': true,
+                        'paided': true,
+                        'paided': true,
+                        'balance':0
+                    }),
+                    headers: { 'X-CSRFToken': getCookie('csrftoken'), 'Content-type': "application/json" },
+                    success: function (stdDelResp) {
+                        swal("You Succesfully Deleted This Car", {
+                            icon: "success",
+                        });
+                        location.reload()
+                    }
+                });
+
+            }
+        });
+    }
+</script>
+<!-- `<i class="bi bi-eye" onclick='location.href="/crInfo/${theCar.id}/"' ></i>
+&nbsp<i onclick='updateCar(${theCar.id})' class="bi bi-pen" style='color:green'></i>
+&nbsp <i onclick='delCar(${theCar.user})' class="bi bi-trash" style='color:red'></i>` -->
+{% endblock %}

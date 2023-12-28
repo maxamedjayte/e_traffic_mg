@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% block content %}
+<link href="https://cdn.jsdelivr.net/npm/simple-datatables@latest/dist/style.css" rel="stylesheet" type="text/css">
+<script src="https://cdn.jsdelivr.net/npm/simple-datatables@latest" type="text/javascript"></script>
+<div class="pagetitle">
+    <h1>All Fines </h1>
+    <nav>
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="#">Home</a></li>
+            <li class="breadcrumb-item active">Dashboard</li>
+        </ol>
+    </nav>
+</div><!-- End Page Title -->
+<section class="section dashboard">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Reports </h5>
+
+                    <!-- Table with stripped rows -->
+                    <table id='reportDatatable' class="table datatable">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Title</th>
+                                <th scope="col">info</th>
+                                <th scope="col">dateTime</th>
+                                <th scope="col">action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <!-- Customers Card -->
+        <!-- End Customers Card -->
+    </div>
+</section>
+<script>
+    const reportDatatable = new simpleDatatables.DataTable("#reportDatatable", {
+        searchable: true,
+        fixedHeight: true,
+
+    })
+
+    $(document).ready(async function () {
+        getReport()
+
+
+    })
+    function getReport() {
+
+        fetch('/api/report-list/').then((resp) => resp.json()).then(function (reportResp) {
+            $.each(reportResp, async function (i, report) {
+
+                reportDatatable.rows().add([
+                    report.id.toString(),
+                    report.title,
+                    report.info,
+                    report.dateTimeTr.split('T')[0]+' '+ report.dateTimeTr.split('T')[1].split('.')[0],
+                    `<i onclick='delReport(${report.id})' class="bi bi-trash" style='color:red'></i>`
+                ])
+            })
+        })
+
+
+    }
+
+</script>
+<!-- `<i class="bi bi-eye" onclick='location.href="/crInfo/${theCar.id}/"' ></i>
+&nbsp<i onclick='updateCar(${theCar.id})' class="bi bi-pen" style='color:green'></i>
+&nbsp <i onclick='delCar(${theCar.user})' class="bi bi-trash" style='color:red'></i>` -->
+{% endblock %}

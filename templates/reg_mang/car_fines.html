@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="pagetitle">
+    <h1>Assain Car Fines</h1>
+    <nav>
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="index.html">Home</a></li>
+            <li class="breadcrumb-item">Users</li>
+            <li class="breadcrumb-item active">Profile</li>
+        </ol>
+    </nav>
+</div><!-- End Page Title -->
+
+<section class="section">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Fill The Form</h5>
+
+                    <!-- Floating Labels Form -->
+                    <form id='carFineForm' class="row g-3">
+                        <div class="col-md-12">
+                            <div class="form-floating">
+                                <select id='cars' class="form-select" name="theCar" required id="floatingSelect"
+                                    aria-label="State">
+
+                                </select>
+
+                                <label for="floatingSelect">Choose Car To Fine</label>
+                            </div>
+                        </div>
+
+                        <div class="col-md-12">
+                            <div class="form-floating">
+                                <select id='fineReg' class="form-select" name="theFine" required id="floatingSelect"
+                                    aria-label="State">
+
+                                </select>
+
+                                <label for="floatingSelect">Choose  Fine</label>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-floating">
+                                <textarea class="form-control" name="desc" placeholder="MOre Iormation" required
+                                    id="floatingTextarea" style="height: 100px;"></textarea>
+                                <label for="floatingTextarea">Description</label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="col-md-12">
+                                <div class="form-floating">
+                                    <input type="date" name='date' class="form-control" id="floatingCity"
+                                        placeholder="Date Fine">
+                                    <label for="floatingCity">Date</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="col-md-12">
+                                <div class="form-floating">
+                                    <input type="time" name="time" class="form-control" id="floatingCity"
+                                        placeholder="Time Fine">
+                                    <label for="floatingCity">Date</label>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- <div class="col-md-4">
+
+                            <div class="input-group mb-3">
+                                <span class="input-group-text" id="basic-addon1">$</span>
+                                <input style="height: 60px;" name="penallyMoney" type="text" class="form-control" value="0"
+                                    placeholder="Fine Money" aria-label="Username" aria-describedby="basic-addon1">
+                            </div>
+                        </div> -->
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-primary">Submit</button>
+                            <button type="reset" class="btn btn-secondary">Reset</button>
+                        </div>
+                    </form><!-- End floating Labels Form -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<script>
+    $(document).ready(async function () {
+        await setCarsToOptions('cars')
+        await setFinesToOptions('fineReg')
+    })
+    
+    document.getElementById('carFineForm').addEventListener('submit', async function (e) {
+        e.preventDefault()
+        var dateTime = $('[name=date]').val() +' '+ $('[name=time]').val()
+        var carName=$('[name=theCar]').val()
+        var balance=0
+        var formData = new FormData(this)
+        var carOwner= await getUserCar($('[name=theCar]').val())
+
+        formData.append("dateTimeReg", dateTime);
+        formData.append("theOwner", carOwner);
+        formData.append("balance", balance);
+        $.ajax({
+            type: "POST",
+            data: formData,
+            headers: { 'X-CSRFToken': getCookie('csrftoken') },
+            url: '/api/carFines-create/',
+            cache: false,
+            contentType: false,
+            processData: false,
+            success: function (carFineResp) {
+                console.log(carFineResp)
+                $.ajax({
+                        type: "POST",
+                        data: JSON.stringify({
+                            'title':'New Car Fine',
+                            'info':`A Fine Was Assained this car id ${carName} `,
+                        }),
+                        headers: { 'X-CSRFToken': getCookie('csrftoken'), 'Content-type': "application/json" },
+                        url: '/api/report-create/',
+                        success: function (carFineResp) {
+                            
+                            console.log(carFineResp)
+                        },
+                        error: function (carRespErr) {
+            
+                        }
+                    })
+                if (carFineResp.status == 'success') {
+                    swal("Car Was Succesfully Assained This Fine ", {
+                        icon: "success"
+                    });
+                    document.getElementById('carFineForm').reset()
+                }
+            },
+            error: function (carRespErr) {
+
+            }
+        })
+    })
+    async function setCarsToOptions(optionId) {
+        option = document.getElementById(optionId)
+        fetch('/api/car-list/').then((resp) => resp.json()).then(function (carsResp) {
+            option.innerHTML = ``
+            for (var car of carsResp) {
+                option.innerHTML += `<option value="${car.id}">${car.name} </option>`
+            }
+        })
+    }
+    async function setFinesToOptions(optionId) {
+        option1 = document.getElementById(optionId)
+        fetch('/api/fine-list/').then((resp) => resp.json()).then(function (carsResp) {
+            option1.innerHTML = ``
+            for (var car of carsResp) {
+                option1.innerHTML += `<option value="${car.id}">${car.fineTitle} --$${car.price}  </option>`
+            }
+        })
+    }
+    async function getUserCar(id) {
+        var owner
+        await fetch('/api/car-detail/'+id+'/').then((resp) => resp.json()).then(function (carResp) {
+            owner=carResp.theOwner
+        })
+        return owner
+    }
+
+</script>
+{% endblock %}

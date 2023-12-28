@@ -1,0 +1,197 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="pagetitle">
+    <h1>Users Registrer </h1>
+    <nav>
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="#">Home</a></li>
+            <li class="breadcrumb-item active">Dashboard</li>
+        </ol>
+    </nav>
+</div><!-- End Page Title -->
+<section class="section">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Fill Form Data To Register User</h5>
+
+                    <!-- General Form Elements -->
+                    <form id="userReg">
+                        <div class="row mb-3">
+                            <label for="inputText" class="col-sm-2 col-form-label">User-Name</label>
+                            <div class="col-sm-10">
+                                <input type="text" name="username" required class="form-control">
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <label for="inputEmail" class="col-sm-2 col-form-label">Full Name</label>
+                            <div class="col-sm-10">
+                                <input type="text" name="fullName" required class="form-control">
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <label for="inputEmail" class="col-sm-2 col-form-label">Password</label>
+                            <div class="col-sm-10">
+                                <input type="text" name="password" required class="form-control">
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <label for="inputPassword" class="col-sm-2 col-form-label">User Type</label>
+                            <div class="col-sm-10">
+                                <select class="form-select" name="userType" required
+                                    aria-label="Default select example">
+                                    
+                                    <option value="Normal Owner">Normal Owner</option>
+                                    <option value="Staff">Staff</option>
+                                    <option value="Admin">Admin</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <label for="inputNumber" class="col-sm-2 col-form-label">Number</label>
+                            <div class="col-sm-10">
+                                <input type="number" name='number' class="form-control">
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <label for="inputNumber" class="col-sm-2 col-form-label">Address</label>
+                            <div class="col-sm-10">
+                                <input type="User Address" name='address' class="form-control">
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <label for="inputNumber" class="col-sm-2 col-form-label">Job</label>
+                            <div class="col-sm-10">
+                                <input type="Current Job" name='job' class="form-control">
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <label for="inputNumber" class="col-sm-2 col-form-label">User Image</label>
+                            <div class="col-sm-10">
+                                <input class="form-control" type="file" name="prfileImage" id="formFile">
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <label for="inputDate" class="col-sm-2 col-form-label">Reg Date</label>
+                            <div class="col-sm-5">
+                                <input type="date" name="date" required class="form-control">
+                            </div>
+                            <div class="col-sm-5">
+                                <input type="time" name="time" required class="form-control">
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <label for="inputPassword" class="col-sm-2 col-form-label">Desc</label>
+                            <div class="col-sm-10">
+                                <textarea class="form-control" name="info" style="height: 100px"></textarea>
+                            </div>
+                        </div>
+
+
+
+
+                        <div class="row mb-3">
+                            <label class="col-sm-2 col-form-label"> </label>
+                            <div class="col-sm-10">
+                                <button type="submit" class="btn btn-primary">Submit Form</button>
+                            </div>
+                        </div>
+
+                    </form><!-- End General Form Elements -->
+
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</section>
+<script>
+    document.getElementById('userReg').addEventListener('submit',async function (e) {
+        e.preventDefault()
+
+        username = $('[name=username]').val()
+        password = $('[name=password]').val()
+        fullName = $('[name=fullName]').val()
+        userTypeVal=$('[name=userType]').val()
+        var formData = new FormData(this)
+
+        var userAdmin=false
+        var userStaff=false
+        if(userTypeVal=='Normal Owner'){
+            userStaff=false
+        }else if(userTypeVal=='Staff'){
+            userStaff=true
+        }else{
+            userAdmin=true
+            userStaff=true
+        }
+        if (await checkIfThisUserIsExist(username) == false) {
+            $.ajax({
+                method: 'POST',
+                url: '/api/user-create/',
+                headers: { 'X-CSRFToken': getCookie('csrftoken'), 'Content-type': "application/json" },
+                data: JSON.stringify({
+                    'username': username,
+                    'password': password,
+                    'is_staff':userStaff,
+                    'is_superuser':userAdmin,
+                    'first_name': fullName,
+                }),
+                success: function (userRes) {
+                    formData.append("user", userRes.data.id);
+                    $.ajax({
+                        type: "POST",
+                        data: formData,
+                        headers: { 'X-CSRFToken': getCookie('csrftoken') },
+                        url: '/api/userProfile-create/',
+                        cache: false,
+                        contentType: false,
+                        processData: false,
+                        success: function (userProfileResp) {
+                            if (userProfileResp.status == 'success') {
+                                swal("User Was Succesfully Registred ", {
+                                    icon: "success"
+                                });
+                                document.getElementById('userReg').reset()
+                            }
+                        },
+                        error: function (studentResErr) {
+
+                        }
+                    })
+                    $.ajax({
+                        method: 'GET',
+                        url: '/api/user-password-format/' + userRes.data.id + '/',
+                        success: function (passwordFormatresp) {
+
+                        }
+                    })
+                }
+            })
+
+
+        }else{
+            swal("This User Already Registered ", {
+                icon: "warning"
+            });
+        }
+
+
+    })
+    async function checkIfThisUserIsExist(username) {
+        var isExist = false
+        await fetch('/api/checkingUserExist/' + username + '/').then((resp) => resp.json()).then(function (usersRes) {
+            if (usersRes.isExist == true) {
+                isExist = true
+            } else {
+                isExist = false
+            }
+
+        })
+        return isExist
+    }
+</script>
+{% endblock %}

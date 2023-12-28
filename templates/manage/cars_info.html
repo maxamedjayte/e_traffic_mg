@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+{% block content %}
+<link href="https://cdn.jsdelivr.net/npm/simple-datatables@latest/dist/style.css" rel="stylesheet" type="text/css">
+<script src="https://cdn.jsdelivr.net/npm/simple-datatables@latest" type="text/javascript"></script>
+<div class="pagetitle">
+    <h1>All Cars Managment </h1>
+    <nav>
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="#">Home</a></li>
+            <li class="breadcrumb-item active">Dashboard</li>
+        </ol>
+    </nav>
+</div><!-- End Page Title -->
+<div class="modal fade" id="carUpdateModel" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Update Car Info</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <form id="carUdateForm">
+                <div id='carUdateModalBody' class="modal-body">
+
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save changes</button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div><!-- End Large Modal-->
+<section class="section">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">ALl Cars-Info</h5>
+
+                    <!-- Table with stripped rows -->
+                    <table id='carsDatatable' class="table datatable">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Car-Name</th>
+                                <th scope="col">Targo-NUm</th>
+                                <th scope="col">Owner</th>
+                                <th scope="col">OwnerNum</th>
+                                <th scope="col">DateReg</th>
+                                <th scope="col">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<script>
+    const carsDatatable = new simpleDatatables.DataTable("#carsDatatable", {
+        searchable: true,
+        fixedHeight: true,
+
+    })
+    
+
+    $(document).ready(async function () {
+        getCars()
+
+    })
+    function getCars() {
+        fetch('/api/car-list/').then((resp) => resp.json()).then(function (carsResp) {
+
+            $.each(carsResp, async function (i, theCar) {
+                console.log(theCar)
+                carsDatatable.rows().add([
+                    theCar.id.toString(),
+                    theCar.name,
+                    theCar.plateNo,
+                    `<a href='/usrDetail/${theCar.theOwner}/'>${theCar.ownerName}</a>`,
+                    theCar.ownerNumber,
+                    theCar.dateTimeReg.split('T')[0],
+                    `
+                 &nbsp<i onclick='updateCar(${theCar.id})' class="bi bi-pen" style='color:green'></i>
+                 &nbsp <i onclick='delCar(${theCar.id})' class="bi bi-trash" style='color:red'></i>`
+                ])
+
+
+            })
+        })
+    }
+    async function updateCar(id) {
+        var carUdateModalBody = document.getElementById('carUdateModalBody')
+
+        await fetch('/api/car-detail/' + id + '/').then((resp) => resp.json()).then(async function (carResp) {
+            
+            carUdateModalBody.innerHTML = `
+            <div class="row mb-3">
+              <label for="inputText" class="col-sm-2 col-form-label">Car-Name</label>
+              <div class="col-sm-10">
+                <input type="text" name="name" value='${carResp.name}' required class="form-control">
+              </div>
+            </div>
+            <div class="row mb-3">
+              <label for="inputEmail" class="col-sm-2 col-form-label">TargoNum</label>
+              <div class="col-sm-10">
+                <input type="text" name="plateNo" value='${carResp.plateNo}' required class="form-control">
+              </div>
+            </div>
+            <div class="row mb-3">
+              <label for="inputPassword" class="col-sm-2 col-form-label">The owner</label>
+              <div class="col-sm-8">
+                <select class="form-select" id="ownersSelect"  name="theOwner"  required aria-label="Default select example">
+                  
+                </select>
+              </div>
+              <div class="col-sm-2">
+                <input type="button" onclick="location.href='/user-reg/'" value="Add Owner" required
+                  class="form-control">
+              </div>
+            </div>
+            <div class="row mb-3">
+              <label for="inputNumber" class="col-sm-2 col-form-label">Number</label>
+              <div class="col-sm-10">
+                <input type="number" value='${carResp.ownerNumber}' disabled class="form-control">
+              </div>
+            </div>
+            <div class="row mb-3">
+              <label for="inputNumber" class="col-sm-2 col-form-label">Car Image</label>
+              <div class="col-sm-10">
+                <input class="form-control" type="file" name="image" id="formFile">
+              </div>
+            </div>
+            <div class="row mb-3">
+              <label for="inputDate"  class="col-sm-2 col-form-label">Reg Date</label>
+              <div class="col-sm-5">
+                <input type="date" name="date" value=${carResp.dateTimeReg.split('T')[0]} required class="form-control">
+              </div>
+              <div class="col-sm-5">
+                <input type="time" name="time" value=${carResp.dateTimeReg.split('T')[1].split('Z')[1]} required class="form-control">
+              </div>
+            </div>
+
+          
+            <div class="row mb-3">
+              <label for="inputPassword" class="col-sm-2 col-form-label">Desc</label>
+              <div class="col-sm-10">
+                <textarea class="form-control" name="desc" style="height: 100px">${carResp.desc}</textarea>
+              </div>
+            </div>
+
+
+
+
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label"> </label>
+              <div class="col-sm-10">
+                <button type="submit" class="btn btn-primary">Submit Form</button>
+              </div>
+            </div>
+
+
+            `
+           await setOwnersToOptions('ownersSelect')
+            document.getElementById('ownersSelect').innerHTML += `<option selected value='${carResp.theOwner}' > ${carResp.ownerName} </option>`
+        })
+        $('#carUpdateModel').modal('show');
+        document.getElementById('carUdateForm').addEventListener('submit', async function (e) {
+            var formData = new FormData(this)
+            e.preventDefault()
+
+            if ($('[name=image]').val() == '') {
+                formData.delete('image')
+            } else {
+
+            }
+            await $.ajax({
+                type: "POST",
+                data: formData,
+                headers: { 'X-CSRFToken': getCookie('csrftoken') },
+                url: '/api/car-update/' + id + '/',
+                cache: false,
+                contentType: false,
+                processData: false,
+                success: async function (carUpdateResp) {
+                    if (carUpdateResp.status == 'success') {
+                        swal("Car Was Succesfully Update ", {
+                            icon: "success"
+                        });
+                        // document.getElementById('userUdateForm').reset()
+                        $('#carUpdateModel').modal('hide');
+                        location.reload()
+                    }
+                },
+                error: function (carRespErr) {
+
+                }
+            })
+
+
+        })
+        function setOwnersToOptions(optionId) {
+            option = document.getElementById(optionId)
+            fetch('/api/userProfile-list/').then((resp) => resp.json()).then(function (ownersResp) {
+                // option.innerHTML = '<option selected disabled>Choose THe Owner</option>'
+                for (var owner of ownersResp) {
+                    if (owner.userType == 'Normal Owner') {
+                        option.innerHTML += `<option value="${owner.id}">${owner.fullName} </option>`
+                    }
+                }
+            })
+        }
+
+    }
+</script>
+
+{% endblock %}
